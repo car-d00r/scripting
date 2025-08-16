@@ -20,7 +20,6 @@ HEADERS = {
 }
 
 
-
 @dataclass(kw_only=True)
 class Episode:
     """Episode dataclass."""
@@ -40,7 +39,6 @@ class Episode:
         content_div = soup.find("div", id="content")
 
         return content_div.text
-
 
 
 def build_episode_map() -> Iterator[Episode]:
@@ -68,9 +66,7 @@ def build_episode_map() -> Iterator[Episode]:
 
             # Extract year from header if present
             m2 = re.search(r"\((\d{4})\)", text)
-            season_year = (
-                datetime.strptime(m2.group(1), "%Y") if m2 else None
-            )
+            season_year = datetime.strptime(m2.group(1), "%Y") if m2 else None
             continue
 
         # Regular episode rows
@@ -105,11 +101,20 @@ def build_episode_map() -> Iterator[Episode]:
 
 [{"scene": ..., "character": ..., "text": ...}]
 
+
 with open("example.txt", "r") as f:
-    lines = f.readlines()
+    lines = f.read()
 
-lines = [line.rstrip("\n").lstrip(" ") for line in lines if line not in ("", "\n")]
-lines = [line for line in lines if line not in ("", "\n")]
+# lines = [line.rstrip("\n").lstrip(" ") for line in lines if line not in ("", "\n")]
+# lines = [line for line in lines if line not in ("", "\n")]
+#
+# for line in lines[:50]:
+#     print(line)
 
-for line in lines[:50]:
-    print(line)
+
+pattern = r"(?:^|\n)([A-Za-z]+:)(.*?)(?=(?:\n[A-Za-z]+:)|\Z)"
+matches = re.findall(pattern, lines, flags=re.DOTALL)
+
+for speaker, utterance in matches:
+    breakpoint()
+    print(f"{speaker}{utterance.strip()}")
