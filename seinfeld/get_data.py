@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterator
+from functools import cache, cached_property
 
 
 BASE_URL = "https://www.seinfeldscripts.com/"
@@ -30,6 +31,16 @@ class Episode:
     season: int
     season_year: datetime
     url: str
+
+    @cached_property
+    def script(self) -> str:
+        resp = requests.get(self.url, headers=HEADERS)
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        content_div = soup.find("div", id="content")
+
+        return content_div.text
+
 
 
 def build_episode_map() -> Iterator[Episode]:
@@ -91,7 +102,7 @@ def build_episode_map() -> Iterator[Episode]:
 
             yield episode
 
-
 epsiodes = build_episode_map()
 for episode in epsiodes:
-    print(episode)
+    breakpoint()
+    break
