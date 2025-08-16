@@ -1,5 +1,6 @@
 import requests
 import re
+import json
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
 from datetime import datetime
@@ -99,22 +100,21 @@ def build_episode_map() -> Iterator[Episode]:
             yield episode
 
 
-[{"scene": ..., "character": ..., "text": ...}]
+lines = []
 
 
 with open("example.txt", "r") as f:
-    lines = f.read()
-
-# lines = [line.rstrip("\n").lstrip(" ") for line in lines if line not in ("", "\n")]
-# lines = [line for line in lines if line not in ("", "\n")]
-#
-# for line in lines[:50]:
-#     print(line)
+    raw_data = f.read()
 
 
 pattern = r"(?:^|\n)([A-Za-z]+:)(.*?)(?=(?:\n[A-Za-z]+:)|\Z)"
-matches = re.findall(pattern, lines, flags=re.DOTALL)
+matches = re.findall(pattern, raw_data, flags=re.DOTALL)
 
-for speaker, utterance in matches:
-    breakpoint()
-    print(f"{speaker}{utterance.strip()}")
+for speaker, text in matches:
+    text = re.sub(r"\[[^\]]*\]", "", text)
+    lines.append({"speaker": speaker.removesuffix(":"), "line": text})
+
+print(lines[:10])
+with open("parsed_lines.json", "w") as f:
+    json.dump(lines, f, indent=4)
+# TODO: Tokenize this guy
