@@ -102,7 +102,14 @@ def build_episode_map() -> Iterator[Episode]:
 
             yield episode
 
-epsiodes = build_episode_map()
-for episode in epsiodes:
-    breakpoint()
-    break
+
+[{"scene": ..., "character": ..., "text": ...}]
+
+with open("example.txt", "r") as f:
+    lines = f.readlines()
+
+lines = [line.rstrip("\n").lstrip(" ") for line in lines if line not in ("", "\n")]
+lines = [line for line in lines if line not in ("", "\n")]
+
+for line in lines[:50]:
+    print(line)
