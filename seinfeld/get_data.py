@@ -1,15 +1,36 @@
 import requests
 import re
-import json
 from bs4 import BeautifulSoup
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterator, Dict, List, Any
-from functools import cache, cached_property
+from functools import cached_property
 import pandas as pd
 from pathlib import Path
 
 
+BAD_SPEAKERS = ["and", "with", "cast", "any", "also"]
+KNOWN_SPEAKER_SWAPS = {
+    "gx": "george",
+    "geoprge": "george",
+    "geoge": "george",
+    "geroge": "george",
+    "georgge": "george",
+    "jery": "jerry",
+    "krame": "kramer",
+    "kramert": "kramer",
+    "krmaer": "kramer",
+    "nx": "neuman",
+    "yyy": "barbara",
+    "fa": "flight attendant",
+    "jx": "jerry",
+    "wx": "waiter",
+    "mm": "morgan",
+    "xx": "brady",
+    "dx": "doctor",
+    "fd": "patrice",
+    "js": "jerry",
+}
 BASE_URL = "https://www.seinfeldscripts.com/"
 INDEX_URL = BASE_URL + "seinfeld-scripts.html"
 LINES_PATTERN = r"(?:^|\n)([A-Z][a-zA-Z]+:)(.*?)(?=(?:\n[A-Za-z]+:)|\Z)"
@@ -51,11 +72,14 @@ class Episode:
         matches = re.findall(LINES_PATTERN, self.script, flags=re.DOTALL)
 
         for speaker, text in matches:
+            clean_speaker = speaker.removesuffix(":").lower()
             text = re.sub(r"\[[^\]]*\]", "", text)
             tokens = re.findall(TOKEN_PATTERN, text.lower())
-            lines.append(
-                {"speaker": speaker.removesuffix(":").lower(), "tokens": tokens}
-            )
+            if clean_speaker in BAD_SPEAKERS:
+                continue
+            if clean_speaker in KNOWN_SPEAKER_SWAPS:
+                clean_speaker = KNOWN_SPEAKER_SWAPS[clean_speaker]
+            lines.append({"speaker": clean_speaker, "tokens": tokens})
         return lines
 
 
