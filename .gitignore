@@ -1,4 +1,4 @@
 .pdm-python
 .venv
 seinfeld/data
-
+*/__pycache__/*

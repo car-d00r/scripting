@@ -2,14 +2,18 @@ import requests
 import re
 import json
 from bs4 import BeautifulSoup
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
-from typing import Iterator
+from typing import Iterator, Dict, List, Any
 from functools import cache, cached_property
+import pandas as pd
+from pathlib import Path
 
 
 BASE_URL = "https://www.seinfeldscripts.com/"
 INDEX_URL = BASE_URL + "seinfeld-scripts.html"
+LINES_PATTERN = r"(?:^|\n)([A-Z][a-zA-Z]+:)(.*?)(?=(?:\n[A-Za-z]+:)|\Z)"
+TOKEN_PATTERN = r"\b\w+'?\w*\b"
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -40,6 +44,19 @@ class Episode:
         content_div = soup.find("div", id="content")
 
         return content_div.text
+
+    @cached_property
+    def line_tokens(self) -> List[Dict[str, Any]]:
+        lines = []
+        matches = re.findall(LINES_PATTERN, self.script, flags=re.DOTALL)
+
+        for speaker, text in matches:
+            text = re.sub(r"\[[^\]]*\]", "", text)
+            tokens = re.findall(TOKEN_PATTERN, text.lower())
+            lines.append(
+                {"speaker": speaker.removesuffix(":").lower(), "tokens": tokens}
+            )
+        return lines
 
 
 def build_episode_map() -> Iterator[Episode]:
@@ -100,21 +117,30 @@ def build_episode_map() -> Iterator[Episode]:
             yield episode
 
 
-lines = []
-
-
-with open("example.txt", "r") as f:
-    raw_data = f.read()
-
-
-pattern = r"(?:^|\n)([A-Za-z]+:)(.*?)(?=(?:\n[A-Za-z]+:)|\Z)"
-matches = re.findall(pattern, raw_data, flags=re.DOTALL)
-
-for speaker, text in matches:
-    text = re.sub(r"\[[^\]]*\]", "", text)
-    lines.append({"speaker": speaker.removesuffix(":"), "line": text})
-
-print(lines[:10])
-with open("parsed_lines.json", "w") as f:
-    json.dump(lines, f, indent=4)
-# TODO: Tokenize this guy
+def load_episodes(expected_path: Path | str) -> pd.DataFrame:
+    expected_path = Path(expected_path)
+    if expected_path.exists():
+        return pd.read_parquet(expected_path)
+    else:
+        episodes = build_episode_map()
+        episode_dfs = []
+        for episode in episodes:
+            rows = []
+            for line in episode.line_tokens:
+                row = {
+                    "title": episode.title,
+                    "airdate": episode.airdate,
+                    "episode_number": episode.episode_number,
+                    "season": episode.season,
+                    "season_year": episode.season_year,
+                    "url": episode.url,
+                    "speaker": line["speaker"],
+                    "tokens": line["tokens"],
+                }
+                rows.append(row)
+            episode_dfs.append(pd.DataFrame(rows))
+        df = pd.concat(episode_dfs)
+        df.to_parquet(
+            expected_path, index=False
+        )  # Let pandas choose the backend       return lines
+        return df
