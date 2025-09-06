@@ -9,7 +9,7 @@ import pandas as pd
 from pathlib import Path
 
 
-BAD_SPEAKERS = ["and", "with", "cast", "any", "also"]
+BAD_SPEAKERS = ["and", "with", "cast", "any", "also", "then", "all"]
 KNOWN_SPEAKER_SWAPS = {
     "gx": "george",
     "geoprge": "george",
@@ -28,8 +28,17 @@ KNOWN_SPEAKER_SWAPS = {
     "mm": "morgan",
     "xx": "brady",
     "dx": "doctor",
+    "docter": "doctor",
     "fd": "patrice",
     "js": "jerry",
+    "neuman": "newman",
+    "nemwan": "newman",
+    "elaien": "elaine",
+    "elainelaine": "elaine",
+    "ealine": "elaine",
+    "allsion": "allison",
+    "sh": "sherry",
+    "benes": "alton",
 }
 BASE_URL = "https://www.seinfeldscripts.com/"
 INDEX_URL = BASE_URL + "seinfeld-scripts.html"
@@ -46,6 +55,7 @@ HEADERS = {
 }
 
 
+# TODO: For at least the chinese woman we are not getting lines properly.
 @dataclass(kw_only=True)
 class Episode:
     """Episode dataclass."""
