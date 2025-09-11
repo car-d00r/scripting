@@ -128,7 +128,7 @@ def build_episode_map() -> Iterator[Episode]:
 
             ep_num = int(cells[0].get_text(strip=True))
             a = cells[1].find("a")
-            title = a.get_text(strip=True) if a else cells[1].get_text(strip=True)
+            title = a.get_text(strip=True) if a else cells[1].get_text(strip=True).strip("\n")
             href = BASE_URL + a["href"].strip() if a else None
 
             # Match airdate like (7/5/89)
